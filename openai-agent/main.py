@@ -28,7 +28,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # OpenAI client initialization
-_openai_client = None
 _openai_import_error = None
 
 try:
@@ -40,27 +39,25 @@ except ImportError as e:
     )
 
 
-def get_openai_client():
-    """Get or initialize the OpenAI client."""
-    global _openai_client
-
+def create_openai_client() -> "AsyncOpenAI":
+    """Create a new OpenAI client instance.
+    
+    Creates a fresh client each time to avoid atexit registration issues
+    that can occur with global async clients in workflow environments.
+    """
     if _openai_import_error:
         raise ImportError(
             "OpenAI package not installed. Install with: pip install openai"
         ) from _openai_import_error
 
-    if _openai_client is None:
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise ValueError(
-                "OPENAI_API_KEY environment variable not set. "
-                "Please set it in your Render environment variables."
-            )
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise ValueError(
+            "OPENAI_API_KEY environment variable not set. "
+            "Please set it in your Render environment variables."
+        )
 
-        _openai_client = AsyncOpenAI(api_key=api_key)
-        logger.info("OpenAI client initialized successfully")
-
-    return _openai_client
+    return AsyncOpenAI(api_key=api_key)
 
 
 # Initialize Workflows app with defaults
@@ -222,7 +219,7 @@ async def call_llm_with_tools(
     """
     logger.info(f"[AGENT] Calling {model} with {len(tools)} tools available")
 
-    client = get_openai_client()
+    client = create_openai_client()
 
     try:
         response = await client.chat.completions.create(
@@ -257,6 +254,8 @@ async def call_llm_with_tools(
     except Exception as e:
         logger.error(f"[AGENT] LLM call failed: {e}")
         raise
+    finally:
+        await client.close()
 
 
 @app.task
