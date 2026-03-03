@@ -1,0 +1,26 @@
+# This file is used by `render workflows init` to scaffold new projects.
+# It tells the CLI how to display this template and what instructions to show
+# after scaffolding. You can safely ignore it when using this example directly.
+
+name: Data Pipeline
+description: Multi-source ETL with parallel extraction and aggregation
+
+workflowsRoot: .
+
+buildCommand: pip install -r requirements.txt
+startCommand: python main.py
+
+additionalNextSteps:
+  - label: View your tasks (in a separate terminal)
+    command: render workflows tasks list --local
+    hint: This will show you all the tasks registered on your local development server.
+  - label: Run the pipeline from the CLI
+    command: "render workflows tasks start run_data_pipeline --local --input='[[\"user_1\", \"user_2\"]]'"
+    hint: Runs a full Extract → Transform → Aggregate pipeline with mock data.
+  - label: Deploy your workflow service to Render
+    hint: |
+      To deploy this workflow to Render, first push this code to a remote repository. Then, create a workflow service from your Render Dashboard, connect it to your repository, and provide the following build and start commands:
+      • Build command: {{buildCommand}}
+      • Start command: {{startCommand}}
+  - label: Connect your app
+    hint: See https://github.com/render-oss/sdk/blob/main/python/README.md for Client SDK integration snippets.
