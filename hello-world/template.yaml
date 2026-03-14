@@ -17,7 +17,7 @@ nextSteps:
   - label: Start your local task server
     command: render workflows dev -- {{startCommand}}
     hint: This runs your workflow service locally, allowing you to view and run tasks without deploying to Render.
-  - label: Run a task locally
+  - label: Run a task locally (in another terminal)
     command: "render workflows tasks start double --local --input='[5]'"
     hint: If you see 10, your tasks are working!
   - label: Deploy your workflow service to Render

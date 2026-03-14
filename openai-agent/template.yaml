@@ -19,7 +19,7 @@ nextSteps:
   - label: Set your OpenAI API key
     command: export OPENAI_API_KEY=your-key-here
     hint: Required for the agent to call GPT-4.
-  - label: Run a conversation locally
+  - label: Run a conversation locally (in another terminal)
     command: "render workflows tasks start multi_turn_conversation --local --input='[\"What is the status of order ORD-001?\"]'"
     hint: The agent will use tool calling to look up the order and respond.
   - label: Deploy your workflow service to Render
