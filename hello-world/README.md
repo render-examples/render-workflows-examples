@@ -84,6 +84,26 @@ Configure your Workflow service with:
 | Build command | `pip install -r requirements.txt` |
 | Start command | `python main.py` |
 
+## Docker Scaffold (Equivalent Runtime Behavior)
+
+If you want to run this template via Docker instead of Render's native Python runtime, use the included [`Dockerfile`](./Dockerfile). It mirrors the same behavior:
+
+- Installs dependencies from `requirements.txt`
+- Starts the workflow service with `python main.py`
+
+Build and run locally:
+
+```bash
+docker build -t workflows-hello-world .
+docker run --rm -it workflows-hello-world
+```
+
+Deploy on Render with Docker runtime:
+
+- Set **Language** to `Docker`
+- Keep Docker command empty to use the image `CMD`
+- Set Dockerfile path to `hello-world/Dockerfile` if deploying from the repository root
+
 ## Key Concepts
 
 ### Task registration
