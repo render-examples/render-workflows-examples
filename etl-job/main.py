@@ -17,7 +17,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-from render_sdk import Retry, Workflows
+from render_sdk import Retry, TaskContext, Workflows
 
 # Configure logging
 logging.basicConfig(
@@ -38,7 +38,7 @@ app = Workflows(
 # ============================================================================
 
 @app.task
-def extract_csv_data(file_path: str) -> list[dict]:
+def extract_csv_data(ctx: TaskContext, file_path: str) -> list[dict]:
     """
     Extract data from a CSV file.
 
@@ -82,7 +82,7 @@ def extract_csv_data(file_path: str) -> list[dict]:
 # ============================================================================
 
 @app.task
-def validate_record(record: dict) -> dict:
+def validate_record(ctx: TaskContext, record: dict) -> dict:
     """
     Validate and clean a single data record.
 
@@ -143,7 +143,7 @@ def validate_record(record: dict) -> dict:
 
 
 @app.task
-async def transform_batch(records: list[dict]) -> dict:
+async def transform_batch(ctx: TaskContext, records: list[dict]) -> dict:
     """
     Transform a batch of records by validating each one.
 
@@ -165,8 +165,8 @@ async def transform_batch(records: list[dict]) -> dict:
     # KEY PATTERN: Calling subtasks in a loop
     for i, record in enumerate(records, 1):
         logger.info(f"[TRANSFORM] Processing record {i}/{len(records)}")
-        # SUBTASK CALL: Each record is validated by calling validate_record as a subtask
-        validated = await validate_record(record)
+        # SUBTASK CALL: ctx.step runs validate_record on its own compute for each record
+        validated = await ctx.step(validate_record, record)
 
         if validated['is_valid']:
             valid_records.append(validated)
@@ -193,7 +193,7 @@ async def transform_batch(records: list[dict]) -> dict:
 # ============================================================================
 
 @app.task
-def compute_statistics(valid_records: list[dict]) -> dict:
+def compute_statistics(ctx: TaskContext, valid_records: list[dict]) -> dict:
     """
     Compute statistical insights from validated records.
 
@@ -255,7 +255,7 @@ def compute_statistics(valid_records: list[dict]) -> dict:
 # ============================================================================
 
 @app.task
-async def run_etl_pipeline(source_file: str) -> dict:
+async def run_etl_pipeline(ctx: TaskContext, source_file: str) -> dict:
     """
     Complete ETL pipeline orchestrating extract, transform, and load operations.
 
@@ -282,20 +282,20 @@ async def run_etl_pipeline(source_file: str) -> dict:
         # Stage 1: Extract
         logger.info("[PIPELINE] Stage 1/3: EXTRACT")
         # SUBTASK CALL: Extract data from CSV
-        raw_records = await extract_csv_data(source_file)
+        raw_records = await ctx.step(extract_csv_data, source_file)
         logger.info(f"[PIPELINE] Extracted {len(raw_records)} records")
 
         # Stage 2: Transform
         logger.info("[PIPELINE] Stage 2/3: TRANSFORM")
         # SUBTASK CALL: Transform calls validate_record for each record
-        transform_result = await transform_batch(raw_records)
+        transform_result = await ctx.step(transform_batch, raw_records)
         logger.info(f"[PIPELINE] Transformation complete: "
                    f"{transform_result['success_rate']:.1%} success rate")
 
         # Stage 3: Load (compute statistics)
         logger.info("[PIPELINE] Stage 3/3: LOAD")
         # SUBTASK CALL: Compute final statistics
-        statistics = await compute_statistics(transform_result['valid_records'])
+        statistics = await ctx.step(compute_statistics, transform_result['valid_records'])
         logger.info("[PIPELINE] Statistics computed")
 
         # Build final result

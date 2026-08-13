@@ -16,7 +16,7 @@ Render Workflows support both Python and TypeScript. This repo contains Python e
 
 | Example | Use Case | Key Patterns | Extra Dependencies |
 |---------|----------|--------------|-------------------|
-| [**Hello World**](./hello-world/) | Learn workflow basics with simple number processing | Task definition, subtask calling with `await`, basic orchestration | None |
+| [**Hello World**](./hello-world/) | Learn workflow basics with simple number processing | Task definition, subtask stepping with `ctx.step`, basic orchestration | None |
 | [**ETL Job**](./etl-job/) | Process CSV data with validation and statistics | Subtasks, sequential processing, batch operations, data validation | None |
 | [**OpenAI Agent**](./openai-agent/) | AI customer support agent with tool calling | Tool calling, nested subtasks (3 levels deep), stateful workflows, dynamic orchestration | `openai` |
 | [**File Processing**](./file-processing/) | Batch process multiple file formats in parallel | Parallel execution with `asyncio.gather()`, multi-format handling, aggregation | None |
@@ -28,7 +28,7 @@ Render Workflows support both Python and TypeScript. This repo contains Python e
 The simplest possible workflow — learn the fundamentals through simple number processing.
 
 - Ultra-simple task definitions
-- Clear subtask calling examples
+- Clear `ctx.step` subtask examples
 - Subtasks in loops demonstration
 - Multi-step workflow orchestration
 - Heavily commented code explaining every pattern

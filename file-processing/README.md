@@ -261,9 +261,9 @@ The key to efficient batch processing is using `asyncio.gather()`:
 
 ```python
 @app.task
-async def process_file_batch(file_paths: list[str]) -> dict:
+async def process_file_batch(ctx: TaskContext, *file_paths: str) -> dict:
     # Launch all file processing tasks concurrently
-    tasks = [process_single_file(fp) for fp in file_paths]
+    tasks = [ctx.step(process_single_file, fp) for fp in file_paths]
     results = await asyncio.gather(*tasks)
 
     # Results from all files are ready
@@ -277,13 +277,13 @@ This processes all files simultaneously rather than sequentially, dramatically r
 **Add New File Format**:
 ```python
 @app.task
-def read_xml_file(file_path: str) -> dict:
+def read_xml_file(ctx: TaskContext, file_path: str) -> dict:
     # Parse XML file
     # Return structured data
     pass
 
 @app.task
-def analyze_xml_data(xml_result: dict) -> dict:
+def analyze_xml_data(ctx: TaskContext, xml_result: dict) -> dict:
     # Analyze XML content
     # Return insights
     pass
@@ -294,24 +294,24 @@ def analyze_xml_data(xml_result: dict) -> dict:
 **Add Cloud Storage Integration**:
 ```python
 @app.task
-async def download_from_s3(bucket: str, key: str) -> str:
+async def download_from_s3(ctx: TaskContext, bucket: str, key: str) -> str:
     # Download file from S3
     # Save to temp location
     # Return local path
     pass
 
 @app.task
-async def process_s3_batch(bucket: str, keys: list[str]) -> dict:
+async def process_s3_batch(ctx: TaskContext, bucket: str, keys: list[str]) -> dict:
     # Download files in parallel
-    paths = await asyncio.gather(*[download_from_s3(bucket, k) for k in keys])
+    paths = await asyncio.gather(*[ctx.step(download_from_s3, bucket, k) for k in keys])
     # Process files
-    return await process_file_batch(paths)
+    return await ctx.step(process_file_batch, *paths)
 ```
 
 **Add Database Export**:
 ```python
 @app.task
-async def export_to_database(report: dict) -> dict:
+async def export_to_database(ctx: TaskContext, report: dict) -> dict:
     # Connect to database
     # Insert report data
     # Return confirmation

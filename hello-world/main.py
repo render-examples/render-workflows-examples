@@ -1,4 +1,4 @@
-from render_sdk import Workflows, Retry
+from render_sdk import TaskContext, Workflows, Retry
 import asyncio
 import random
 
@@ -6,15 +6,16 @@ app = Workflows()
 
 
 @app.task
-def calculate_square(a: int) -> int:
+def calculate_square(ctx: TaskContext, a: int) -> int:
     return a * a
 
 
 @app.task
-async def sum_squares(a: int, b: int) -> int:
+async def sum_squares(ctx: TaskContext, a: int, b: int) -> int:
+    # ctx.step runs a task on its own compute and returns its result
     result1, result2 = await asyncio.gather(
-        calculate_square(a),
-        calculate_square(b),
+        ctx.step(calculate_square, a),
+        ctx.step(calculate_square, b),
     )
     return result1 + result2
 
@@ -26,7 +27,7 @@ async def sum_squares(a: int, b: int) -> int:
         backoff_scaling=1.5,
     )
 )
-def flip_coin() -> str:
+def flip_coin(ctx: TaskContext) -> str:
     if random.random() < 0.5:
         raise Exception("Flipped tails! Retrying.")
     return "Flipped heads!"
