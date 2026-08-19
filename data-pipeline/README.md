@@ -212,20 +212,20 @@ Using `asyncio.gather()` ensures all sources are fetched in parallel for maximum
 
 ### Stage 2: Transform
 
-**`transform_user_data`**: Combines data from all sources and enriches each user by stepping subtasks:
+**`transform_user_data`**: Combines data from all sources and enriches each user by running subtasks:
 ```python
 for user in users:
     # SUBTASK CALL: Calculate metrics for this user
-    user_metrics = await ctx.step(
+    user_metrics = await ctx.run(
         calculate_user_metrics, user, transactions, engagement
     )
 
     # SUBTASK CALL: Enrich with geographic data
-    geo_data = await ctx.step(enrich_with_geo_data, user['email'])
+    geo_data = await ctx.run(enrich_with_geo_data, user['email'])
 
     enriched_users.append({**user_metrics, 'geo': geo_data})
 ```
-This demonstrates **sequential subtask steps per item** in a transformation loop.
+This demonstrates **sequential subtask runs per item** in a transformation loop.
 
 **`calculate_user_metrics`**: Calculates per-user metrics:
 - Total spent and refunded
@@ -285,9 +285,9 @@ This demonstrates **sequential subtask steps per item** in a transformation loop
 
 ```python
 # SUBTASK PATTERN: Launch multiple subtasks in parallel
-user_task = ctx.step(fetch_user_data, user_ids)
-transaction_task = ctx.step(fetch_transaction_data, user_ids)
-engagement_task = ctx.step(fetch_engagement_data, user_ids)
+user_task = ctx.run(fetch_user_data, user_ids)
+transaction_task = ctx.run(fetch_transaction_data, user_ids)
+engagement_task = ctx.run(fetch_engagement_data, user_ids)
 
 # SUBTASK CALLS: Wait for all three subtasks to complete
 user_data, transaction_data, engagement_data = await asyncio.gather(
@@ -306,17 +306,17 @@ Each user is enriched by calling multiple subtasks:
 ```python
 for user in users:
     # SUBTASK CALL: Calculate user-specific metrics
-    metrics = await ctx.step(
+    metrics = await ctx.run(
         calculate_user_metrics, user, transactions, engagement
     )
 
     # SUBTASK CALL: Enrich with geographic data
-    geo = await ctx.step(enrich_with_geo_data, user['email'])
+    geo = await ctx.run(enrich_with_geo_data, user['email'])
 
     enriched_users.append({**metrics, 'geo': geo})
 ```
 
-This shows **sequential subtask steps** for per-item enrichment.
+This shows **sequential subtask runs** for per-item enrichment.
 
 ### User Segmentation
 

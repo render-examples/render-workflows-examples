@@ -252,7 +252,7 @@ async def execute_tool(ctx: TaskContext, tool_name: str, arguments: dict) -> dic
     """
     Execute a tool function by name.
 
-    This demonstrates dynamic subtask execution via ctx.step, based on
+    This demonstrates dynamic subtask execution via ctx.run, based on
     agent decisions.
 
     Args:
@@ -273,16 +273,16 @@ async def execute_tool(ctx: TaskContext, tool_name: str, arguments: dict) -> dic
         return {"error": f"Unknown tool: {tool_name}"}
 
     try:
-        # SUBTASK CALL: ctx.step runs the tool task on its own compute.
+        # SUBTASK CALL: ctx.run runs the tool task on its own compute.
         # Each tool takes different arguments.
         if tool_name == "get_order_status":
-            result = await ctx.step(get_order_status, arguments.get("order_id"))
+            result = await ctx.run(get_order_status, arguments.get("order_id"))
         elif tool_name == "process_refund":
-            result = await ctx.step(
+            result = await ctx.run(
                 process_refund, arguments.get("order_id"), arguments.get("reason")
             )
         elif tool_name == "search_knowledge_base":
-            result = await ctx.step(search_knowledge_base, arguments.get("query"))
+            result = await ctx.run(search_knowledge_base, arguments.get("query"))
         else:
             result = {"error": "Tool not implemented"}
 
@@ -406,7 +406,7 @@ async def agent_turn(
     )
 
     # Call LLM
-    llm_response = await ctx.step(call_llm_with_tools, messages, tools)
+    llm_response = await ctx.run(call_llm_with_tools, messages, tools)
 
     # If no tool calls, return the response
     if not llm_response.get("tool_calls"):
@@ -426,7 +426,7 @@ async def agent_turn(
     tool_results = []
 
     for tool_call in llm_response["tool_calls"]:
-        result = await ctx.step(
+        result = await ctx.run(
             execute_tool,
             tool_call["function"]["name"],
             json.loads(tool_call["function"]["arguments"]),
@@ -449,7 +449,7 @@ async def agent_turn(
         *tool_messages,
     ]
 
-    final_response = await ctx.step(call_llm_with_tools, final_messages, tools)
+    final_response = await ctx.run(call_llm_with_tools, final_messages, tools)
 
     logger.info("[AGENT TURN] Agent turn complete")
 
@@ -492,7 +492,7 @@ async def multi_turn_conversation(ctx: TaskContext, *messages: str) -> dict:
     for i, user_message in enumerate(messages_list, 1):
         logger.info(f"[CONVERSATION] Turn {i}/{len(messages_list)}")
 
-        turn_result = await ctx.step(agent_turn, user_message, conversation_history)
+        turn_result = await ctx.run(agent_turn, user_message, conversation_history)
 
         responses.append(
             {

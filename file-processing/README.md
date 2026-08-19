@@ -263,7 +263,7 @@ The key to efficient batch processing is using `asyncio.gather()`:
 @app.task
 async def process_file_batch(ctx: TaskContext, *file_paths: str) -> dict:
     # Launch all file processing tasks concurrently
-    tasks = [ctx.step(process_single_file, fp) for fp in file_paths]
+    tasks = [ctx.run(process_single_file, fp) for fp in file_paths]
     results = await asyncio.gather(*tasks)
 
     # Results from all files are ready
@@ -303,9 +303,9 @@ async def download_from_s3(ctx: TaskContext, bucket: str, key: str) -> str:
 @app.task
 async def process_s3_batch(ctx: TaskContext, bucket: str, keys: list[str]) -> dict:
     # Download files in parallel
-    paths = await asyncio.gather(*[ctx.step(download_from_s3, bucket, k) for k in keys])
+    paths = await asyncio.gather(*[ctx.run(download_from_s3, bucket, k) for k in keys])
     # Process files
-    return await ctx.step(process_file_batch, *paths)
+    return await ctx.run(process_file_batch, *paths)
 ```
 
 **Add Database Export**:

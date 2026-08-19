@@ -13,7 +13,7 @@ Process customer signup data from CSV files with validation, cleaning, and stati
 
 ## Features
 
-- **Subtask Execution**: Demonstrates running tasks from other tasks with `ctx.step`
+- **Subtask Execution**: Demonstrates running tasks from other tasks with `ctx.run`
 - **Extract**: Read data from CSV files (extensible to APIs, databases)
 - **Transform**: Validate records with comprehensive error tracking
 - **Load**: Compute statistics and prepare aggregated insights
@@ -167,9 +167,9 @@ This demonstrates how the pipeline handles data quality issues.
 ```python
 for record in records:
     # Run validate_record as a subtask on its own compute
-    validated = await ctx.step(validate_record, record)
+    validated = await ctx.run(validate_record, record)
 ```
-This demonstrates **stepping subtasks in a loop** for batch processing.
+This demonstrates **running subtasks in a loop** for batch processing.
 
 **`compute_statistics`**: Aggregates valid records to produce:
 - Country distribution
@@ -177,9 +177,9 @@ This demonstrates **stepping subtasks in a loop** for batch processing.
 - Data quality metrics
 
 **`run_etl_pipeline`**: Main orchestrator that runs three subtasks sequentially:
-1. `await ctx.step(extract_csv_data, source_file)` - Extract data
-2. `await ctx.step(transform_batch, raw_records)` - Validate records (which steps `validate_record` for each)
-3. `await ctx.step(compute_statistics, valid_records)` - Generate insights
+1. `await ctx.run(extract_csv_data, source_file)` - Extract data
+2. `await ctx.run(transform_batch, raw_records)` - Validate records (which runs `validate_record` for each)
+3. `await ctx.run(compute_statistics, valid_records)` - Generate insights
 
 This demonstrates **sequential subtask orchestration** for multi-stage pipelines.
 
@@ -212,7 +212,7 @@ import asyncio
 @app.task
 async def transform_batch_parallel(ctx: TaskContext, records: list[dict]) -> dict:
     # Validate all records in parallel
-    tasks = [ctx.step(validate_record, record) for record in records]
+    tasks = [ctx.run(validate_record, record) for record in records]
     results = await asyncio.gather(*tasks)
     # Aggregate results
     return results

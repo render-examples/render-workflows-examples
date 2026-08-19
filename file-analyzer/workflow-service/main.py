@@ -268,7 +268,7 @@ async def analyze_file(ctx: TaskContext, file_content: str) -> dict:
     Main orchestrator task for file analysis.
 
     This task coordinates the entire analysis pipeline by running
-    other tasks as SUBTASKS via ctx.step.
+    other tasks as SUBTASKS via ctx.run.
 
     Pipeline:
     1. Parse CSV data
@@ -287,7 +287,7 @@ async def analyze_file(ctx: TaskContext, file_content: str) -> dict:
     # Stage 1: Parse CSV data
     logger.info("[ANALYZE_FILE] Stage 1: Parsing CSV data")
     # SUBTASK CALL: Parse the CSV content
-    parsed_data = await ctx.step(parse_csv_data, file_content)
+    parsed_data = await ctx.run(parse_csv_data, file_content)
 
     if not parsed_data["success"]:
         logger.error("[ANALYZE_FILE] Failed to parse CSV data")
@@ -302,17 +302,17 @@ async def analyze_file(ctx: TaskContext, file_content: str) -> dict:
     # Stage 2: Calculate statistics (SUBTASK)
     logger.info("[ANALYZE_FILE] Stage 2: Calculating statistics")
     # SUBTASK CALL: Calculate statistical metrics
-    stats = await ctx.step(calculate_statistics, parsed_data)
+    stats = await ctx.run(calculate_statistics, parsed_data)
 
     # Stage 3: Identify trends (SUBTASK)
     logger.info("[ANALYZE_FILE] Stage 3: Identifying trends")
     # SUBTASK CALL: Identify patterns and trends
-    trends = await ctx.step(identify_trends, parsed_data)
+    trends = await ctx.run(identify_trends, parsed_data)
 
     # Stage 4: Generate insights (SUBTASK)
     logger.info("[ANALYZE_FILE] Stage 4: Generating insights")
     # SUBTASK CALL: Generate final insights report
-    insights = await ctx.step(generate_insights, stats, trends, parsed_data)
+    insights = await ctx.run(generate_insights, stats, trends, parsed_data)
 
     logger.info("[ANALYZE_FILE] Analysis pipeline completed successfully")
 

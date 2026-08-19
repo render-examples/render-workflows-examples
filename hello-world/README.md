@@ -9,8 +9,8 @@ This hello-world example demonstrates three foundational workflow patterns:
 ## What You'll Learn
 
 - How to define tasks with `@app.task`
-- How to run one task from another with `ctx.step`
-- How to run task steps in parallel with `asyncio.gather`
+- How to run one task from another with `ctx.run`
+- How to run tasks in parallel with `asyncio.gather`
 - How to customize retry behavior with `Retry`
 
 ## Example Tasks
@@ -24,13 +24,13 @@ task, it receives a `TaskContext` as its first parameter.
 
 Chains two runs of `calculate_square` and sums the results.
 
-It uses `ctx.step(...)` to run each one on its own compute, and
+It uses `ctx.run(...)` to run each one on its own compute, and
 `asyncio.gather(...)` to run them in parallel:
 
 ```python
 result1, result2 = await asyncio.gather(
-    ctx.step(calculate_square, a),
-    ctx.step(calculate_square, b),
+    ctx.run(calculate_square, a),
+    ctx.run(calculate_square, b),
 )
 ```
 
@@ -96,7 +96,7 @@ Any function decorated with `@app.task` is registered when your service starts v
 ### Subtasks
 
 Every task receives a `TaskContext` as its first parameter. Inside an `async`
-task, `await ctx.step(other_task, ...)` runs `other_task` on its own compute and
+task, `await ctx.run(other_task, ...)` runs `other_task` on its own compute and
 returns its result. The context parameter isn't part of the task's inputs, so
 `--input` only supplies the parameters that follow it.
 

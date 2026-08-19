@@ -275,34 +275,34 @@ Searches the knowledge base for information.
 ```python
 @app.task
 async def execute_tool(ctx: TaskContext, tool_name: str, arguments: dict) -> dict:
-    # SUBTASK CALL: ctx.step runs the chosen tool on its own compute.
+    # SUBTASK CALL: ctx.run runs the chosen tool on its own compute.
     # Each tool takes different arguments.
     if tool_name == "get_order_status":
-        return await ctx.step(get_order_status, arguments["order_id"])
+        return await ctx.run(get_order_status, arguments["order_id"])
     if tool_name == "process_refund":
-        return await ctx.step(
+        return await ctx.run(
             process_refund, arguments["order_id"], arguments["reason"]
         )
     if tool_name == "search_knowledge_base":
-        return await ctx.step(search_knowledge_base, arguments["query"])
+        return await ctx.run(search_knowledge_base, arguments["query"])
     return {"error": f"Unknown tool: {tool_name}"}
 ```
 
 **`agent_turn`**: Executes a single conversation turn with nested subtask execution:
-1. `await ctx.step(call_llm_with_tools, ...)` - Call LLM with user message
-2. If tools requested: `await ctx.step(execute_tool, ...)` for each tool (which then steps the actual tool task)
-3. `await ctx.step(call_llm_with_tools, ...)` again with tool results to generate final response
+1. `await ctx.run(call_llm_with_tools, ...)` - Call LLM with user message
+2. If tools requested: `await ctx.run(execute_tool, ...)` for each tool (which then runs the actual tool task)
+3. `await ctx.run(call_llm_with_tools, ...)` again with tool results to generate final response
 
-This demonstrates **nested subtask stepping**: `agent_turn` → `execute_tool` → `get_order_status` (3 levels deep!).
+This demonstrates **nested subtask calling**: `agent_turn` → `execute_tool` → `get_order_status` (3 levels deep!).
 
 **`multi_turn_conversation`**: Orchestrates multiple conversation turns:
 ```python
 for user_message in messages:
     # SUBTASK CALL: Process each message through agent_turn
-    turn_result = await ctx.step(agent_turn, user_message, conversation_history)
+    turn_result = await ctx.run(agent_turn, user_message, conversation_history)
     conversation_history = turn_result["conversation_history"]
 ```
-This demonstrates **stepping subtasks in a loop** to maintain conversation state.
+This demonstrates **running subtasks in a loop** to maintain conversation state.
 
 ## Adding New Tools
 

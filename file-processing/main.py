@@ -362,31 +362,31 @@ async def process_single_file(ctx: TaskContext, file_path: str) -> dict:
     extension = path.suffix.lower()
 
     # Read file based on type
-    # SUBTASK PATTERN: Chain multiple ctx.step calls together
+    # SUBTASK PATTERN: Chain multiple ctx.run calls together
     if extension == '.csv':
         # SUBTASK CALL: Read CSV file
-        read_result = await ctx.step(read_csv_file, file_path)
+        read_result = await ctx.run(read_csv_file, file_path)
         # SUBTASK CALL: Analyze the CSV data (if read was successful)
         analysis = (
-            await ctx.step(analyze_csv_data, read_result)
+            await ctx.run(analyze_csv_data, read_result)
             if read_result.get("success")
             else {}
         )
     elif extension == '.json':
         # SUBTASK CALL: Read JSON file
-        read_result = await ctx.step(read_json_file, file_path)
+        read_result = await ctx.run(read_json_file, file_path)
         # SUBTASK CALL: Analyze JSON structure
         analysis = (
-            await ctx.step(analyze_json_structure, read_result)
+            await ctx.run(analyze_json_structure, read_result)
             if read_result.get("success")
             else {}
         )
     elif extension == '.txt':
         # SUBTASK CALL: Read text file
-        read_result = await ctx.step(read_text_file, file_path)
+        read_result = await ctx.run(read_text_file, file_path)
         # SUBTASK CALL: Analyze text content
         analysis = (
-            await ctx.step(analyze_text_content, read_result)
+            await ctx.run(analyze_text_content, read_result)
             if read_result.get("success")
             else {}
         )
@@ -430,9 +430,9 @@ async def process_file_batch(ctx: TaskContext, *file_paths: str) -> dict:
     logger.info("=" * 80)
 
     # Process all files in parallel
-    # SUBTASK PATTERN: Step multiple subtasks concurrently using asyncio.gather()
+    # SUBTASK PATTERN: Run multiple subtasks concurrently using asyncio.gather()
     logger.info("[BATCH] Launching parallel file processing tasks...")
-    tasks = [ctx.step(process_single_file, fp) for fp in file_paths_list]
+    tasks = [ctx.run(process_single_file, fp) for fp in file_paths_list]
     results = await asyncio.gather(*tasks)
 
     # Aggregate results

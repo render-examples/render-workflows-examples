@@ -305,13 +305,13 @@ async def transform_user_data(
         user_engagement = engagement_map.get(user['id'], {})
 
         # Calculate metrics for this user
-        user_metrics = await ctx.step(
+        user_metrics = await ctx.run(
             calculate_user_metrics, user, transactions, user_engagement
         )
 
         # Enrich with geo data
         user_email = user.get('email', f"{user['id']}@example.com")
-        geo_data = await ctx.step(enrich_with_geo_data, user_email)
+        geo_data = await ctx.run(enrich_with_geo_data, user_email)
         user_metrics['geo'] = geo_data
 
         enriched_users.append(user_metrics)
@@ -430,9 +430,9 @@ async def run_data_pipeline(ctx: TaskContext, user_ids: list[str]) -> dict:
     try:
         # Stage 1: EXTRACT - Fetch from all sources in parallel
         logger.info("[PIPELINE] Stage 1/3: EXTRACT (parallel)")
-        user_task = ctx.step(fetch_user_data, user_ids)
-        transaction_task = ctx.step(fetch_transaction_data, user_ids)
-        engagement_task = ctx.step(fetch_engagement_data, user_ids)
+        user_task = ctx.run(fetch_user_data, user_ids)
+        transaction_task = ctx.run(fetch_transaction_data, user_ids)
+        engagement_task = ctx.run(fetch_engagement_data, user_ids)
 
         # Wait for all extractions to complete
         user_data, transaction_data, engagement_data = await asyncio.gather(
@@ -445,7 +445,7 @@ async def run_data_pipeline(ctx: TaskContext, user_ids: list[str]) -> dict:
 
         # Stage 2: TRANSFORM - Combine and enrich
         logger.info("[PIPELINE] Stage 2/3: TRANSFORM")
-        enriched_data = await ctx.step(
+        enriched_data = await ctx.run(
             transform_user_data,
             user_data,
             transaction_data,
@@ -456,7 +456,7 @@ async def run_data_pipeline(ctx: TaskContext, user_ids: list[str]) -> dict:
 
         # Stage 3: LOAD - Generate insights
         logger.info("[PIPELINE] Stage 3/3: AGGREGATE")
-        insights = await ctx.step(aggregate_insights, enriched_data)
+        insights = await ctx.run(aggregate_insights, enriched_data)
 
         logger.info("[PIPELINE] Insights generated successfully")
 

@@ -12,10 +12,10 @@ def calculate_square(ctx: TaskContext, a: int) -> int:
 
 @app.task
 async def sum_squares(ctx: TaskContext, a: int, b: int) -> int:
-    # ctx.step runs a task on its own compute and returns its result
+    # ctx.run runs a task on its own compute and returns its result
     result1, result2 = await asyncio.gather(
-        ctx.step(calculate_square, a),
-        ctx.step(calculate_square, b),
+        ctx.run(calculate_square, a),
+        ctx.run(calculate_square, b),
     )
     return result1 + result2
 

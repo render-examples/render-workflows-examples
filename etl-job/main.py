@@ -165,8 +165,8 @@ async def transform_batch(ctx: TaskContext, records: list[dict]) -> dict:
     # KEY PATTERN: Calling subtasks in a loop
     for i, record in enumerate(records, 1):
         logger.info(f"[TRANSFORM] Processing record {i}/{len(records)}")
-        # SUBTASK CALL: ctx.step runs validate_record on its own compute for each record
-        validated = await ctx.step(validate_record, record)
+        # SUBTASK CALL: ctx.run runs validate_record on its own compute for each record
+        validated = await ctx.run(validate_record, record)
 
         if validated['is_valid']:
             valid_records.append(validated)
@@ -282,20 +282,20 @@ async def run_etl_pipeline(ctx: TaskContext, source_file: str) -> dict:
         # Stage 1: Extract
         logger.info("[PIPELINE] Stage 1/3: EXTRACT")
         # SUBTASK CALL: Extract data from CSV
-        raw_records = await ctx.step(extract_csv_data, source_file)
+        raw_records = await ctx.run(extract_csv_data, source_file)
         logger.info(f"[PIPELINE] Extracted {len(raw_records)} records")
 
         # Stage 2: Transform
         logger.info("[PIPELINE] Stage 2/3: TRANSFORM")
         # SUBTASK CALL: Transform calls validate_record for each record
-        transform_result = await ctx.step(transform_batch, raw_records)
+        transform_result = await ctx.run(transform_batch, raw_records)
         logger.info(f"[PIPELINE] Transformation complete: "
                    f"{transform_result['success_rate']:.1%} success rate")
 
         # Stage 3: Load (compute statistics)
         logger.info("[PIPELINE] Stage 3/3: LOAD")
         # SUBTASK CALL: Compute final statistics
-        statistics = await ctx.step(compute_statistics, transform_result['valid_records'])
+        statistics = await ctx.run(compute_statistics, transform_result['valid_records'])
         logger.info("[PIPELINE] Statistics computed")
 
         # Build final result
