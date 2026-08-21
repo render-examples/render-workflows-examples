@@ -17,7 +17,7 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 
-from render_sdk import Retry, TaskContext, Workflows
+from render import Retry, TaskContext, Workflows
 
 # Configure logging
 logging.basicConfig(

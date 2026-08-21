@@ -179,7 +179,7 @@ Input:
 Once deployed, trigger the pipeline via the Render API or SDK:
 
 ```python
-from render_sdk import Render
+from render import Render
 
 # Uses RENDER_API_KEY environment variable automatically
 render = Render()
@@ -379,7 +379,7 @@ async def send_pipeline_notification(ctx: TaskContext, result: dict) -> dict:
 
 ## Important Notes
 
-- **Python-only**: Workflows are only supported in Python via render-sdk
+- **Python-only**: Workflows are only supported in Python via `render`
 - **No Blueprint Support**: Workflows don't support render.yaml blueprint configuration
 - **Mock Data**: Example uses simulated data; replace with real API calls in production
 - **Idempotency**: Design pipeline to be safely re-runnable

@@ -183,7 +183,7 @@ Note: You'll need to copy the actual result from `process_file_batch` to test th
 Once deployed, trigger file processing via the Render API or SDK:
 
 ```python
-from render_sdk import Render
+from render import Render
 
 # Uses RENDER_API_KEY environment variable automatically
 render = Render()
@@ -327,7 +327,7 @@ async def export_to_database(ctx: TaskContext, report: dict) -> dict:
 
 ## Important Notes
 
-- **Python-only**: Workflows are only supported in Python via render-sdk
+- **Python-only**: Workflows are only supported in Python via `render`
 - **No Blueprint Support**: Workflows don't support render.yaml blueprint configuration
 - **File Access**: In production, integrate with cloud storage (S3, GCS) or databases
 - **Retry Logic**: All read operations include retry configuration for transient failures

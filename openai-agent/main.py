@@ -18,7 +18,7 @@ import logging
 import os
 from datetime import datetime
 
-from render_sdk import Retry, TaskContext, Workflows
+from render import Retry, TaskContext, Workflows
 
 # Configure logging
 logging.basicConfig(

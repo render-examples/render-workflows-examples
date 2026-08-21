@@ -126,7 +126,7 @@ Input:
 Once deployed, trigger the ETL pipeline via the Render API or SDK:
 
 ```python
-from render_sdk import Render
+from render import Render
 
 # Uses RENDER_API_KEY environment variable automatically
 render = Render()
@@ -220,6 +220,6 @@ async def transform_batch_parallel(ctx: TaskContext, records: list[dict]) -> dic
 
 ## Important Notes
 
-- **Python-only**: Workflows are only supported in Python via render-sdk
+- **Python-only**: Workflows are only supported in Python via `render`
 - **No Blueprint Support**: Workflows don't support render.yaml blueprint configuration
 - **Service Type**: Deploy as a Workflow service on Render (not Background Worker or Web Service)

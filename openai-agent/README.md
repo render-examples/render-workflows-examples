@@ -197,7 +197,7 @@ This will process all messages in sequence, maintaining context between turns.
 Once deployed, interact with the agent via the Render API or SDK:
 
 ```python
-from render_sdk import Render
+from render import Render
 
 # Uses RENDER_API_KEY environment variable automatically
 render = Render()
@@ -373,7 +373,7 @@ Agent: "We offer free shipping on orders over $50. Standard shipping takes 3-5 b
 
 ## Important Notes
 
-- **Python-only**: Workflows are only supported in Python via render-sdk
+- **Python-only**: Workflows are only supported in Python via `render`
 - **No Blueprint Support**: Workflows don't support render.yaml blueprint configuration
 - **OpenAI Costs**: Be mindful of API costs when running the agent frequently
 - **Model Selection**: Currently uses GPT-4; can be changed to GPT-3.5-turbo for cost savings

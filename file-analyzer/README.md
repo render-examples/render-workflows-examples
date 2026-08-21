@@ -204,7 +204,7 @@ async def analyze_file(ctx: TaskContext, file_content: str) -> dict:
 The API service demonstrates the complete Client SDK workflow:
 
 ```python
-from render_sdk import Render
+from render import Render
 
 # 1. Get client instance (uses RENDER_API_KEY env var automatically)
 render = Render()
@@ -495,7 +495,7 @@ Contains customer information with columns:
 
 **Creating the Client:**
 ```python
-from render_sdk import Render
+from render import Render
 
 # Uses RENDER_API_KEY environment variable automatically
 render = Render()
@@ -522,7 +522,7 @@ print(result.results)  # Return value from task
 
 **Defining Tasks:**
 ```python
-from render_sdk import TaskContext, Workflows
+from render import TaskContext, Workflows
 
 app = Workflows()
 
@@ -676,7 +676,7 @@ def parse_excel_data(ctx: TaskContext, file_content: bytes) -> dict:
 
 ## Important Notes
 
-- **Python-only**: Render Workflows are only supported in Python via `render-sdk`
+- **Python-only**: Render Workflows are only supported in Python via `render`
 - **No Blueprint Support**: Workflows don't support `render.yaml` blueprint configuration
 - **Service Types**: Workflow service (for tasks) vs Web Service (for API)
 - **Task Arguments**: Passed as a dict: `{"arg1": value1, "arg2": value2}`
@@ -687,7 +687,7 @@ def parse_excel_data(ctx: TaskContext, file_content: bytes) -> dict:
 ## Resources
 
 - [Render Workflows Documentation](https://docs.render.com/workflows)
-- [Render SDK on PyPI](https://pypi.org/project/render-sdk/)
+- [Render SDK on PyPI](https://pypi.org/project/render/)
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [Render Dashboard](https://dashboard.render.com/)
 
