@@ -13,7 +13,7 @@ Process customer signup data from CSV files with validation, cleaning, and stati
 
 ## Features
 
-- **Subtask Execution**: Demonstrates calling tasks from other tasks using `await`
+- **Subtask Execution**: Demonstrates running tasks from other tasks with `ctx.run`
 - **Extract**: Read data from CSV files (extensible to APIs, databases)
 - **Transform**: Validate records with comprehensive error tracking
 - **Load**: Compute statistics and prepare aggregated insights
@@ -126,7 +126,7 @@ Input:
 Once deployed, trigger the ETL pipeline via the Render API or SDK:
 
 ```python
-from render_sdk import Render
+from render import Render
 
 # Uses RENDER_API_KEY environment variable automatically
 render = Render()
@@ -163,23 +163,23 @@ This demonstrates how the pipeline handles data quality issues.
 - Validates age range (0-120)
 - Returns cleaned data with error tracking
 
-**`transform_batch`**: Processes all records by calling `validate_record` as a subtask for each one:
+**`transform_batch`**: Processes all records by running `validate_record` as a subtask for each one:
 ```python
 for record in records:
-    # Call validate_record as a subtask
-    validated = await validate_record(record)
+    # Run validate_record as a subtask on its own compute
+    validated = await ctx.run(validate_record, record)
 ```
-This demonstrates **calling subtasks in a loop** for batch processing.
+This demonstrates **running subtasks in a loop** for batch processing.
 
 **`compute_statistics`**: Aggregates valid records to produce:
 - Country distribution
 - Age statistics (min, max, average)
 - Data quality metrics
 
-**`run_etl_pipeline`**: Main orchestrator that calls three subtasks sequentially:
-1. `await extract_csv_data(source_file)` - Extract data
-2. `await transform_batch(raw_records)` - Validate records (which calls `validate_record` for each)
-3. `await compute_statistics(valid_records)` - Generate insights
+**`run_etl_pipeline`**: Main orchestrator that runs three subtasks sequentially:
+1. `await ctx.run(extract_csv_data, source_file)` - Extract data
+2. `await ctx.run(transform_batch, raw_records)` - Validate records (which runs `validate_record` for each)
+3. `await ctx.run(compute_statistics, valid_records)` - Generate insights
 
 This demonstrates **sequential subtask orchestration** for multi-stage pipelines.
 
@@ -188,7 +188,7 @@ This demonstrates **sequential subtask orchestration** for multi-stage pipelines
 **Add Database Loading**:
 ```python
 @app.task
-async def load_to_database(records: list[dict]) -> dict:
+async def load_to_database(ctx: TaskContext, records: list[dict]) -> dict:
     # Connect to database
     # Insert records
     # Return confirmation
@@ -198,7 +198,7 @@ async def load_to_database(records: list[dict]) -> dict:
 **Add API Data Source**:
 ```python
 @app.task
-async def extract_from_api(api_url: str) -> list[dict]:
+async def extract_from_api(ctx: TaskContext, api_url: str) -> list[dict]:
     # Fetch from REST API
     # Parse JSON response
     # Return records
@@ -210,9 +210,9 @@ async def extract_from_api(api_url: str) -> list[dict]:
 import asyncio
 
 @app.task
-async def transform_batch_parallel(records: list[dict]) -> dict:
+async def transform_batch_parallel(ctx: TaskContext, records: list[dict]) -> dict:
     # Validate all records in parallel
-    tasks = [validate_record(record) for record in records]
+    tasks = [ctx.run(validate_record, record) for record in records]
     results = await asyncio.gather(*tasks)
     # Aggregate results
     return results
@@ -220,6 +220,6 @@ async def transform_batch_parallel(records: list[dict]) -> dict:
 
 ## Important Notes
 
-- **Python-only**: Workflows are only supported in Python via render-sdk
+- **Python-only**: Workflows are only supported in Python via `render`
 - **No Blueprint Support**: Workflows don't support render.yaml blueprint configuration
 - **Service Type**: Deploy as a Workflow service on Render (not Background Worker or Web Service)

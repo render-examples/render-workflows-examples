@@ -17,7 +17,7 @@ import csv
 import io
 from datetime import datetime
 
-from render_sdk import Retry, Workflows
+from render import Retry, TaskContext, Workflows
 
 # Configure logging
 logging.basicConfig(
@@ -34,7 +34,7 @@ app = Workflows(
 
 
 @app.task
-def parse_csv_data(file_content: str) -> dict:
+def parse_csv_data(ctx: TaskContext, file_content: str) -> dict:
     """
     Parse CSV file content into structured data.
 
@@ -85,7 +85,7 @@ def parse_csv_data(file_content: str) -> dict:
 
 
 @app.task
-def calculate_statistics(data: dict) -> dict:
+def calculate_statistics(ctx: TaskContext, data: dict) -> dict:
     """
     Calculate statistical metrics from parsed data.
 
@@ -148,7 +148,7 @@ def calculate_statistics(data: dict) -> dict:
 
 
 @app.task
-def identify_trends(data: dict) -> dict:
+def identify_trends(ctx: TaskContext, data: dict) -> dict:
     """
     Identify trends and patterns in the data.
 
@@ -206,7 +206,9 @@ def identify_trends(data: dict) -> dict:
 
 
 @app.task
-async def generate_insights(stats: dict, trends: dict, metadata: dict) -> dict:
+async def generate_insights(
+    ctx: TaskContext, stats: dict, trends: dict, metadata: dict
+) -> dict:
     """
     Generate final insights report combining statistics and trends.
 
@@ -261,12 +263,12 @@ async def generate_insights(stats: dict, trends: dict, metadata: dict) -> dict:
 
 
 @app.task
-async def analyze_file(file_content: str) -> dict:
+async def analyze_file(ctx: TaskContext, file_content: str) -> dict:
     """
     Main orchestrator task for file analysis.
 
-    This task coordinates the entire analysis pipeline by calling
-    other tasks as SUBTASKS.
+    This task coordinates the entire analysis pipeline by running
+    other tasks as SUBTASKS via ctx.run.
 
     Pipeline:
     1. Parse CSV data
@@ -285,7 +287,7 @@ async def analyze_file(file_content: str) -> dict:
     # Stage 1: Parse CSV data
     logger.info("[ANALYZE_FILE] Stage 1: Parsing CSV data")
     # SUBTASK CALL: Parse the CSV content
-    parsed_data = await parse_csv_data(file_content)
+    parsed_data = await ctx.run(parse_csv_data, file_content)
 
     if not parsed_data["success"]:
         logger.error("[ANALYZE_FILE] Failed to parse CSV data")
@@ -300,17 +302,17 @@ async def analyze_file(file_content: str) -> dict:
     # Stage 2: Calculate statistics (SUBTASK)
     logger.info("[ANALYZE_FILE] Stage 2: Calculating statistics")
     # SUBTASK CALL: Calculate statistical metrics
-    stats = await calculate_statistics(parsed_data)
+    stats = await ctx.run(calculate_statistics, parsed_data)
 
     # Stage 3: Identify trends (SUBTASK)
     logger.info("[ANALYZE_FILE] Stage 3: Identifying trends")
     # SUBTASK CALL: Identify patterns and trends
-    trends = await identify_trends(parsed_data)
+    trends = await ctx.run(identify_trends, parsed_data)
 
     # Stage 4: Generate insights (SUBTASK)
     logger.info("[ANALYZE_FILE] Stage 4: Generating insights")
     # SUBTASK CALL: Generate final insights report
-    insights = await generate_insights(stats, trends, parsed_data)
+    insights = await ctx.run(generate_insights, stats, trends, parsed_data)
 
     logger.info("[ANALYZE_FILE] Analysis pipeline completed successfully")
 

@@ -141,25 +141,25 @@ file-analyzer/
 
 ### Tasks Defined
 
-**`parse_csv_data(file_content: str) -> dict`**
+**`parse_csv_data(ctx, file_content: str) -> dict`**
 - Parses CSV content into structured data
 - Returns rows, columns, and metadata
 
-**`calculate_statistics(data: dict) -> dict`** (Subtask)
+**`calculate_statistics(ctx, data: dict) -> dict`** (Subtask)
 - Calculates statistical metrics for numeric columns
 - Returns min, max, avg, sum for each numeric column
 
-**`identify_trends(data: dict) -> dict`** (Subtask)
+**`identify_trends(ctx, data: dict) -> dict`** (Subtask)
 - Identifies patterns in categorical data
 - Returns distribution analysis and top values
 
-**`generate_insights(stats: dict, trends: dict, metadata: dict) -> dict`** (Subtask)
+**`generate_insights(ctx, stats: dict, trends: dict, metadata: dict) -> dict`** (Subtask)
 - Generates final insights report
 - Combines statistics and trends into actionable findings
 
-**`analyze_file(file_content: str) -> dict`** (Main orchestrator)
+**`analyze_file(ctx, file_content: str) -> dict`** (Main orchestrator)
 - Coordinates the entire analysis pipeline
-- Calls parse → calculate → identify → generate as subtasks
+- Runs parse → calculate → identify → generate as subtasks
 
 ### Subtask Pattern
 
@@ -167,18 +167,18 @@ The main `analyze_file` task demonstrates subtask orchestration:
 
 ```python
 @app.task
-async def analyze_file(file_content: str) -> dict:
+async def analyze_file(ctx: TaskContext, file_content: str) -> dict:
     # SUBTASK CALL: Parse CSV data
-    parsed_data = await parse_csv_data(file_content)
+    parsed_data = await ctx.run(parse_csv_data, file_content)
 
     # SUBTASK CALL: Calculate statistics
-    stats = await calculate_statistics(parsed_data)
+    stats = await ctx.run(calculate_statistics, parsed_data)
 
     # SUBTASK CALL: Identify trends
-    trends = await identify_trends(parsed_data)
+    trends = await ctx.run(identify_trends, parsed_data)
 
     # SUBTASK CALL: Generate insights
-    insights = await generate_insights(stats, trends, parsed_data)
+    insights = await ctx.run(generate_insights, stats, trends, parsed_data)
 
     return {"statistics": stats, "trends": trends, "insights": insights}
 ```
@@ -204,7 +204,7 @@ async def analyze_file(file_content: str) -> dict:
 The API service demonstrates the complete Client SDK workflow:
 
 ```python
-from render_sdk import Render
+from render import Render
 
 # 1. Get client instance (uses RENDER_API_KEY env var automatically)
 render = Render()
@@ -495,7 +495,7 @@ Contains customer information with columns:
 
 **Creating the Client:**
 ```python
-from render_sdk import Render
+from render import Render
 
 # Uses RENDER_API_KEY environment variable automatically
 render = Render()
@@ -522,12 +522,13 @@ print(result.results)  # Return value from task
 
 **Defining Tasks:**
 ```python
-from render_sdk import Workflows
+from render import TaskContext, Workflows
 
 app = Workflows()
 
+# Every task takes a TaskContext as its first parameter, followed by its inputs
 @app.task
-def my_task(param: str) -> dict:
+def my_task(ctx: TaskContext, param: str) -> dict:
     return {"result": param}
 
 app.start()
@@ -597,12 +598,14 @@ async def analyze_file(file: UploadFile):
 
 ```python
 @app.task
-async def analyze_file(file_content: str, webhook_url: str = None) -> dict:
+async def analyze_file(
+    ctx: TaskContext, file_content: str, webhook_url: str = None
+) -> dict:
     # ... perform analysis ...
 
     if webhook_url:
         # Notify completion
-        await send_webhook(webhook_url, results)
+        await ctx.run(send_webhook, webhook_url, results)
 
     return results
 ```
@@ -611,12 +614,12 @@ async def analyze_file(file_content: str, webhook_url: str = None) -> dict:
 
 ```python
 @app.task
-def parse_json_data(file_content: str) -> dict:
+def parse_json_data(ctx: TaskContext, file_content: str) -> dict:
     # Parse JSON files
     pass
 
 @app.task
-def parse_excel_data(file_content: bytes) -> dict:
+def parse_excel_data(ctx: TaskContext, file_content: bytes) -> dict:
     # Parse Excel files
     pass
 ```
@@ -673,7 +676,7 @@ def parse_excel_data(file_content: bytes) -> dict:
 
 ## Important Notes
 
-- **Python-only**: Render Workflows are only supported in Python via `render-sdk`
+- **Python-only**: Render Workflows are only supported in Python via `render`
 - **No Blueprint Support**: Workflows don't support `render.yaml` blueprint configuration
 - **Service Types**: Workflow service (for tasks) vs Web Service (for API)
 - **Task Arguments**: Passed as a dict: `{"arg1": value1, "arg2": value2}`
@@ -684,7 +687,7 @@ def parse_excel_data(file_content: bytes) -> dict:
 ## Resources
 
 - [Render Workflows Documentation](https://docs.render.com/workflows)
-- [Render SDK on PyPI](https://pypi.org/project/render-sdk/)
+- [Render SDK on PyPI](https://pypi.org/project/render/)
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [Render Dashboard](https://dashboard.render.com/)
 

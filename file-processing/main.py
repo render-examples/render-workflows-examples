@@ -20,7 +20,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-from render_sdk import Retry, Workflows
+from render import Retry, TaskContext, Workflows
 
 # Configure logging
 logging.basicConfig(
@@ -41,7 +41,7 @@ app = Workflows(
 # ============================================================================
 
 @app.task
-def read_csv_file(file_path: str) -> dict:
+def read_csv_file(ctx: TaskContext, file_path: str) -> dict:
     """
     Read and parse a CSV file.
 
@@ -89,7 +89,7 @@ def read_csv_file(file_path: str) -> dict:
 
 
 @app.task
-def read_json_file(file_path: str) -> dict:
+def read_json_file(ctx: TaskContext, file_path: str) -> dict:
     """
     Read and parse a JSON file.
 
@@ -134,7 +134,7 @@ def read_json_file(file_path: str) -> dict:
 
 
 @app.task
-def read_text_file(file_path: str) -> dict:
+def read_text_file(ctx: TaskContext, file_path: str) -> dict:
     """
     Read and analyze a text file.
 
@@ -189,7 +189,7 @@ def read_text_file(file_path: str) -> dict:
 # ============================================================================
 
 @app.task
-def analyze_csv_data(csv_result: dict) -> dict:
+def analyze_csv_data(ctx: TaskContext, csv_result: dict) -> dict:
     """
     Analyze CSV data and extract insights.
 
@@ -247,7 +247,7 @@ def analyze_csv_data(csv_result: dict) -> dict:
 
 
 @app.task
-def analyze_json_structure(json_result: dict) -> dict:
+def analyze_json_structure(ctx: TaskContext, json_result: dict) -> dict:
     """
     Analyze JSON structure and extract metadata.
 
@@ -290,7 +290,7 @@ def analyze_json_structure(json_result: dict) -> dict:
 
 
 @app.task
-def analyze_text_content(text_result: dict) -> dict:
+def analyze_text_content(ctx: TaskContext, text_result: dict) -> dict:
     """
     Analyze text content for insights.
 
@@ -345,7 +345,7 @@ def analyze_text_content(text_result: dict) -> dict:
 # ============================================================================
 
 @app.task
-async def process_single_file(file_path: str) -> dict:
+async def process_single_file(ctx: TaskContext, file_path: str) -> dict:
     """
     Process a single file based on its extension.
 
@@ -362,22 +362,34 @@ async def process_single_file(file_path: str) -> dict:
     extension = path.suffix.lower()
 
     # Read file based on type
-    # SUBTASK PATTERN: Chain multiple subtask calls together
+    # SUBTASK PATTERN: Chain multiple ctx.run calls together
     if extension == '.csv':
         # SUBTASK CALL: Read CSV file
-        read_result = await read_csv_file(file_path)
+        read_result = await ctx.run(read_csv_file, file_path)
         # SUBTASK CALL: Analyze the CSV data (if read was successful)
-        analysis = await analyze_csv_data(read_result) if read_result.get("success") else {}
+        analysis = (
+            await ctx.run(analyze_csv_data, read_result)
+            if read_result.get("success")
+            else {}
+        )
     elif extension == '.json':
         # SUBTASK CALL: Read JSON file
-        read_result = await read_json_file(file_path)
+        read_result = await ctx.run(read_json_file, file_path)
         # SUBTASK CALL: Analyze JSON structure
-        analysis = await analyze_json_structure(read_result) if read_result.get("success") else {}
+        analysis = (
+            await ctx.run(analyze_json_structure, read_result)
+            if read_result.get("success")
+            else {}
+        )
     elif extension == '.txt':
         # SUBTASK CALL: Read text file
-        read_result = await read_text_file(file_path)
+        read_result = await ctx.run(read_text_file, file_path)
         # SUBTASK CALL: Analyze text content
-        analysis = await analyze_text_content(read_result) if read_result.get("success") else {}
+        analysis = (
+            await ctx.run(analyze_text_content, read_result)
+            if read_result.get("success")
+            else {}
+        )
     else:
         logger.warning(f"[PROCESS] Unsupported file type: {extension}")
         return {
@@ -398,7 +410,7 @@ async def process_single_file(file_path: str) -> dict:
 
 
 @app.task
-async def process_file_batch(*file_paths: str) -> dict:
+async def process_file_batch(ctx: TaskContext, *file_paths: str) -> dict:
     """
     Process multiple files in parallel.
 
@@ -418,9 +430,9 @@ async def process_file_batch(*file_paths: str) -> dict:
     logger.info("=" * 80)
 
     # Process all files in parallel
-    # SUBTASK PATTERN: Call multiple subtasks concurrently using asyncio.gather()
+    # SUBTASK PATTERN: Run multiple subtasks concurrently using asyncio.gather()
     logger.info("[BATCH] Launching parallel file processing tasks...")
-    tasks = [process_single_file(fp) for fp in file_paths_list]
+    tasks = [ctx.run(process_single_file, fp) for fp in file_paths_list]
     results = await asyncio.gather(*tasks)
 
     # Aggregate results
@@ -453,7 +465,7 @@ async def process_file_batch(*file_paths: str) -> dict:
 
 
 @app.task
-async def generate_consolidated_report(batch_result: dict) -> dict:
+async def generate_consolidated_report(ctx: TaskContext, batch_result: dict) -> dict:
     """
     Generate a consolidated report from batch processing results.
 

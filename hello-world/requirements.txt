@@ -1,1 +1,1 @@
-render_sdk>=0.6.0
+render>=1.0.1

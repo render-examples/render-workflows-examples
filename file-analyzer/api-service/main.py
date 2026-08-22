@@ -16,8 +16,8 @@ import logging
 from typing import Any
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from render_sdk import RenderAsync
-from render_sdk.client.errors import RenderError, TaskRunError
+from render import RenderAsync
+from render.client.errors import RenderError, TaskRunError
 from pydantic import BaseModel
 
 # Configure logging

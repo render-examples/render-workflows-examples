@@ -179,7 +179,7 @@ Input:
 Once deployed, trigger the pipeline via the Render API or SDK:
 
 ```python
-from render_sdk import Render
+from render import Render
 
 # Uses RENDER_API_KEY environment variable automatically
 render = Render()
@@ -212,18 +212,20 @@ Using `asyncio.gather()` ensures all sources are fetched in parallel for maximum
 
 ### Stage 2: Transform
 
-**`transform_user_data`**: Combines data from all sources and enriches each user by calling subtasks:
+**`transform_user_data`**: Combines data from all sources and enriches each user by running subtasks:
 ```python
 for user in users:
     # SUBTASK CALL: Calculate metrics for this user
-    user_metrics = await calculate_user_metrics(user, transactions, engagement)
+    user_metrics = await ctx.run(
+        calculate_user_metrics, user, transactions, engagement
+    )
 
     # SUBTASK CALL: Enrich with geographic data
-    geo_data = await enrich_with_geo_data(user['email'])
+    geo_data = await ctx.run(enrich_with_geo_data, user['email'])
 
     enriched_users.append({**user_metrics, 'geo': geo_data})
 ```
-This demonstrates **sequential subtask calls per item** in a transformation loop.
+This demonstrates **sequential subtask runs per item** in a transformation loop.
 
 **`calculate_user_metrics`**: Calculates per-user metrics:
 - Total spent and refunded
@@ -283,9 +285,9 @@ This demonstrates **sequential subtask calls per item** in a transformation loop
 
 ```python
 # SUBTASK PATTERN: Launch multiple subtasks in parallel
-user_task = fetch_user_data(user_ids)
-transaction_task = fetch_transaction_data(user_ids)
-engagement_task = fetch_engagement_data(user_ids)
+user_task = ctx.run(fetch_user_data, user_ids)
+transaction_task = ctx.run(fetch_transaction_data, user_ids)
+engagement_task = ctx.run(fetch_engagement_data, user_ids)
 
 # SUBTASK CALLS: Wait for all three subtasks to complete
 user_data, transaction_data, engagement_data = await asyncio.gather(
@@ -304,15 +306,17 @@ Each user is enriched by calling multiple subtasks:
 ```python
 for user in users:
     # SUBTASK CALL: Calculate user-specific metrics
-    metrics = await calculate_user_metrics(user, transactions, engagement)
+    metrics = await ctx.run(
+        calculate_user_metrics, user, transactions, engagement
+    )
 
     # SUBTASK CALL: Enrich with geographic data
-    geo = await enrich_with_geo_data(user['email'])
+    geo = await ctx.run(enrich_with_geo_data, user['email'])
 
     enriched_users.append({**metrics, 'geo': geo})
 ```
 
-This shows **sequential subtask calls** for per-item enrichment.
+This shows **sequential subtask runs** for per-item enrichment.
 
 ### User Segmentation
 
@@ -327,7 +331,7 @@ Business logic classifies users into segments:
 **Add Real APIs**:
 ```python
 @app.task
-async def fetch_user_data_from_api(user_ids: list[str]) -> dict:
+async def fetch_user_data_from_api(ctx: TaskContext, user_ids: list[str]) -> dict:
     client = get_http_client()
     response = await client.post(
         "https://api.yourservice.com/users",
@@ -339,7 +343,7 @@ async def fetch_user_data_from_api(user_ids: list[str]) -> dict:
 **Add Database Integration**:
 ```python
 @app.task
-async def load_to_warehouse(insights: dict) -> dict:
+async def load_to_warehouse(ctx: TaskContext, insights: dict) -> dict:
     # Connect to data warehouse (Snowflake, BigQuery, etc.)
     # Insert aggregated insights
     # Return confirmation
@@ -349,7 +353,7 @@ async def load_to_warehouse(insights: dict) -> dict:
 **Add Caching**:
 ```python
 @app.task
-async def fetch_with_cache(source: str, key: str) -> dict:
+async def fetch_with_cache(ctx: TaskContext, source: str, key: str) -> dict:
     # Check Redis/Memcached
     # If miss, fetch from source and cache
     # Return data
@@ -359,7 +363,7 @@ async def fetch_with_cache(source: str, key: str) -> dict:
 **Add Notifications**:
 ```python
 @app.task
-async def send_pipeline_notification(result: dict) -> dict:
+async def send_pipeline_notification(ctx: TaskContext, result: dict) -> dict:
     # Send to Slack, email, etc.
     # Notify stakeholders of pipeline completion
     pass
@@ -375,7 +379,7 @@ async def send_pipeline_notification(result: dict) -> dict:
 
 ## Important Notes
 
-- **Python-only**: Workflows are only supported in Python via render-sdk
+- **Python-only**: Workflows are only supported in Python via `render`
 - **No Blueprint Support**: Workflows don't support render.yaml blueprint configuration
 - **Mock Data**: Example uses simulated data; replace with real API calls in production
 - **Idempotency**: Design pipeline to be safely re-runnable
